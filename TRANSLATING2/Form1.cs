@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +15,7 @@ namespace TRANSLATING2
     {
         private StringBuilder sourceCodeBuilder;
         private string selectedJsonFilePath;
+        private string[] fileNames;
         public Form1()
         {
             InitializeComponent();
@@ -32,6 +34,11 @@ namespace TRANSLATING2
                 string displayJson = File.ReadAllText(selectedJsonFilePath);
                 richTextBox1.Text = displayJson;
             }
+        }
+        private void btnParsing_Click(object sender, EventArgs e)
+        {
+            Parsing.Parsing formParsing = new Parsing.Parsing();
+            formParsing.Show();
         }
         private void btnClear_Click(object sender, EventArgs e)
         {
@@ -348,6 +355,5 @@ namespace TRANSLATING2
                 MessageBox.Show("Please generate C code before copying.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
     }
 }
