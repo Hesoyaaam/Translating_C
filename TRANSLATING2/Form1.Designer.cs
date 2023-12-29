@@ -121,6 +121,7 @@ namespace TRANSLATING2
             this.btnParsing.TabIndex = 18;
             this.btnParsing.Text = "Parsing";
             this.btnParsing.UseVisualStyleBackColor = true;
+            this.btnParsing.Click += new System.EventHandler(this.btnParsing_Click);
             // 
             // btnVizualize
             // 
@@ -194,7 +195,7 @@ namespace TRANSLATING2
             this.PerformLayout();
 
         }
-
+      
         #endregion
         private System.Windows.Forms.RichTextBox richTextBox2;
         private System.Windows.Forms.RichTextBox richTextBox1;
