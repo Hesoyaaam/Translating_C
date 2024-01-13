@@ -940,5 +940,19 @@ namespace TRANSLATING2
         {
 
         }
+
+        private void btnVizualize_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("We are sorry, this feature is not available right now.", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        private void btnSimulate_Click(object sender, EventArgs e)
+        {
+
+            MessageBox.Show("We are sorry, this feature is not available right now.", "", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+
+        }
     }
 }
