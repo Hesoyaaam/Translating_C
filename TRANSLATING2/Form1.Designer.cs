@@ -172,7 +172,7 @@ namespace TRANSLATING2
             this.btnCCODE.Name = "btnCCODE";
             this.btnCCODE.Size = new System.Drawing.Size(140, 48);
             this.btnCCODE.TabIndex = 21;
-            this.btnCCODE.Text = "Copy Code";
+            this.btnCCODE.Text = "Copy";
             this.btnCCODE.UseVisualStyleBackColor = false;
             this.btnCCODE.Click += new System.EventHandler(this.btnCCODE_Click);
             // 

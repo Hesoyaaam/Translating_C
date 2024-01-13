@@ -918,18 +918,17 @@ namespace TRANSLATING2
         {
             string helpMessage = "This Application is to generate file JSON to C programming language.\n\n" +
 
-                         "1. Click 'Browse' to select a file JSON.\n" +
-                         "2. Click 'Parsing' to check JSON data.\n" +
+                         "1. Click 'Select File' to select a file JSON.\n" +
+                         "2. Click 'Parse' to check JSON data.\n" +
                          "Interpret Checking Results.\n" +
                          "   - Review the checking results in the output text box.\n" +
                          "   - If there are errors, error messages will be provided to guide the corrections.\n" +
-                         "3. Click 'Simulate' to simulation this program\n" +
-                         "4. Click Visualize to visualization all data\n" +
-                         "5. Click 'Translate' to translate file JSON to C programming language.\n" +
-                         "6. Click 'Clear' to clear all data that been upload and translate\n" +
-                         "7. Click 'Copy Json' to copy JSON data in textbox\n" +
-                         "8. Click 'Copy Code' to copy C code in textbox\n" +
-                         "9. Click 'Export' to save the translated data in a C programming language\n";
+                         "3. Click 'Visualiza' to visualization all data\n" +
+                         "4. Click 'Translate' to translate file JSON to C programming language.\n" +
+                         "5. Click 'Simulate' to simulation this program\n" +
+                         "6. Click 'Copy' to copy C code in textbox\n" +
+                         "7. Click 'Save' to save the translated data in a C programming language\n" +
+                         "8. Click 'Reset' to clear all data that been upload and translate\n";
 
 
 
