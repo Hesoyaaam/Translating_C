@@ -10,9 +10,9 @@ namespace TRANSLATING2.Parsing
 {
     public static class CheckParsing610
     {
-        public static bool Point6(Parsing form1, JArray jsonArray)
+        public static bool Point6(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
@@ -98,9 +98,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point7(Parsing form1, JArray jsonArray)
+        public static bool Point7(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
@@ -193,9 +193,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point8(Parsing form1, JArray jsonArray)
+        public static bool Point8(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
@@ -237,9 +237,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point9(Parsing form1, JArray jsonArray)
+        public static bool Point9(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
@@ -331,9 +331,9 @@ namespace TRANSLATING2.Parsing
             return false;
         }
 
-        public static bool Point10(Parsing form1, JArray jsonArray)
+        public static bool Point10(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
 
             try
             {

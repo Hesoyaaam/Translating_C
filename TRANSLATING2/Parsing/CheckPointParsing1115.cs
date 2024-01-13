@@ -10,9 +10,9 @@ namespace TRANSLATING2.Parsing
 {
     public static class CheckParsing1115
     {
-        public static bool Point11(Parsing form1, JArray subsystems)
+        public static bool Point11(Form1 form1, JArray subsystems)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in subsystems)
@@ -114,9 +114,9 @@ namespace TRANSLATING2.Parsing
             return false;
         }
 
-        public static bool Point13(Parsing form1, JArray jsonArray)
+        public static bool Point13(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
 
             try
             {
@@ -220,9 +220,9 @@ namespace TRANSLATING2.Parsing
         }
 
 
-        public static bool Point14(Parsing form1, JArray subsystems)
+        public static bool Point14(Form1 form1, JArray subsystems)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var currentSubsystem in subsystems)
@@ -315,9 +315,9 @@ namespace TRANSLATING2.Parsing
         }
 
 
-        public static bool Point15(Parsing form1, JArray subsystems)
+        public static bool Point15(Form1 form1, JArray subsystems)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in subsystems)
@@ -358,9 +358,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point99(Parsing form1, JArray subsystems)
+        public static bool Point99(Form1 form1, JArray subsystems)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in subsystems)

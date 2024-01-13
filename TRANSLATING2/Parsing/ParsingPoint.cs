@@ -10,9 +10,9 @@ namespace TRANSLATING2.Parsing
 {
     public static class ParsingPoint
     {
-        public static bool Point25(Parsing form1, JArray jsonArray)
+        public static bool Point25(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 Func<JToken, bool> processItem = null;
@@ -142,9 +142,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point27(Parsing form1, JArray jsonArray)
+        public static bool Point27(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
 
             try
             {
@@ -204,9 +204,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point28(Parsing form1, JArray jsonArray)
+        public static bool Point28(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 Func<JToken, bool> processItem = null;
@@ -245,9 +245,9 @@ namespace TRANSLATING2.Parsing
         }
 
 
-        public static bool Point29(Parsing form1, JArray jsonArray)
+        public static bool Point29(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 Func<JToken, bool> processItem = null;
@@ -345,9 +345,9 @@ namespace TRANSLATING2.Parsing
         }
 
 
-        public static bool Point30(Parsing form1, JArray jsonArray)
+        public static bool Point30(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
 
             try
             {
@@ -414,9 +414,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point34(Parsing form1, JArray jsonArray)
+        public static bool Point34(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 Func<JToken, bool> processItem = null;
@@ -474,9 +474,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point35(Parsing form1, JArray jsonArray)
+        public static bool Point35(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 HashSet<string> change = new HashSet<string>();

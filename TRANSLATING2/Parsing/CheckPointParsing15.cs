@@ -10,9 +10,9 @@ namespace TRANSLATING2.Parsing
 {
     public static class CheckParsing15
     {
-        public static bool Point1(Parsing form1, JArray jsonArray)
+        public static bool Point1(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 HashSet<string> subsystemNames = new HashSet<string>();
@@ -49,10 +49,10 @@ namespace TRANSLATING2.Parsing
                 return false;
             }
         }
-        public static bool Point2(Parsing form1, JArray jsonArray)
+        public static bool Point2(Form1 form1, JArray jsonArray)
         {
 
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
@@ -148,10 +148,10 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point3(Parsing form1, JArray jsonArray)
+        public static bool Point3(Form1 form1, JArray jsonArray)
         {
 
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 Dictionary<string, HashSet<string>> classInfoMap = new Dictionary<string, HashSet<string>>();
@@ -265,9 +265,9 @@ namespace TRANSLATING2.Parsing
             return string.Join("|", attributeStrings);
         }
 
-        public static bool Point4(Parsing form1, JArray jsonArray)
+        public static bool Point4(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
@@ -349,9 +349,9 @@ namespace TRANSLATING2.Parsing
             }
         }
 
-        public static bool Point5(Parsing form1, JArray jsonArray)
+        public static bool Point5(Form1 form1, JArray jsonArray)
         {
-            TextBox msgBox = form1.GetMessageBox();
+            RichTextBox msgBox = form1.GetMessageBox();
             try
             {
                 foreach (var subsystem in jsonArray)
