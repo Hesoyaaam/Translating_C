@@ -146,6 +146,7 @@ namespace TRANSLATING2
             this.btnVizualize.TabIndex = 19;
             this.btnVizualize.Text = "Visualize";
             this.btnVizualize.UseVisualStyleBackColor = false;
+            this.btnVizualize.Click += new System.EventHandler(this.btnVizualize_Click);
             // 
             // btnSimulate
             // 
@@ -159,6 +160,7 @@ namespace TRANSLATING2
             this.btnSimulate.TabIndex = 20;
             this.btnSimulate.Text = "Simulate";
             this.btnSimulate.UseVisualStyleBackColor = false;
+            this.btnSimulate.Click += new System.EventHandler(this.btnSimulate_Click);
             // 
             // btnCCODE
             // 
