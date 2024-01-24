@@ -407,10 +407,23 @@ namespace TRANSLATING2
                 string umlDiagramJson = File.ReadAllText(jsonFilePath);
                 JsonData json = JsonConvert.DeserializeObject<JsonData>(umlDiagramJson);
 
-                GenerateStructsAndAssociations(json);
-                GenerateStateEnumsAndStructs(json);
-                GenerateEnums(json);
-                GenerateStateTransitions(json);
+                GenerateNamespace(json.sub_name);
+
+                foreach (var model in json.model)
+                {
+                    switch (model.type)
+                    {
+                        case "class":
+                            GenerateClassStruct(model);
+                            break;
+                        case "association":
+                            GenerateAssociation(model);
+                            break;
+                        case "imported_class":
+                            GenerateImportedClassStruct(model);
+                            break;
+                    }
+                }
 
                 CloseNamespace();
             }
@@ -418,7 +431,7 @@ namespace TRANSLATING2
             {
                 MessageBox.Show($"Error parsing JSON: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }   
+        }
         private void GenerateNamespace(string namespaceName)
         {
             sourceCodeBuilder.AppendLine("#include <stdio.h>");
@@ -427,26 +440,6 @@ namespace TRANSLATING2
             sourceCodeBuilder.AppendLine($"namespace {namespaceName}");
             sourceCodeBuilder.AppendLine("{");
         }
-        private void GenerateStructsAndAssociations(JsonData json)
-        {
-            GenerateNamespace(json.sub_name);
-
-            foreach (var model in json.model)
-            {
-                switch (model.type)
-                {
-                    case "class":
-                        GenerateClassStruct(model);
-                        break;                       
-                    case "association":
-                        GenerateAssociationStruct(model);
-                        break;
-                    case "imported_class":
-                        GenerateImportedClassStruct(model);
-                        break;
-                }
-            }
-        }
         private void GenerateClassStruct(JsonData.Model classModel)
         {
             string className = classModel.class_name;
@@ -454,303 +447,28 @@ namespace TRANSLATING2
 
             GenerateAttributes(classModel);
             GenerateStatesEnum(classModel);
+            GenerateEventsEnums(classModel);
+            //GenerateEventName(classModel); 
+
 
             sourceCodeBuilder.AppendLine("};");
             sourceCodeBuilder.AppendLine();
 
-            //GenerateStateFunctions(classModel);
+            //GenerateConstructor(classModel);
+            GenerateStateFunctions(classModel);
+            GenerateStateTransitions(classModel);
+            //GenerateAttributeSetters(classModel);
+            //GeneratePrintAttributeNames(classModel);
+            GenerateSetter(classModel); 
+
         }
-        private void GenerateAttributes(JsonData.Model classModel)
+        private void GenerateStateTransitions(JsonData.Model classModel)
         {
-            foreach (var attribute in classModel.attributes)
-            {
-                string attributeType = MapDataType(attribute.data_type.ToLower());
-
-                if (attribute.data_type.ToLower() == "string")
-                {
-                    sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name}[100];");
-                }
-                else
-                {
-                    sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name};");
-                }
-            }
-        }
-
-        private void GenerateStatesEnum(JsonData.Model classModel)
-        {
-            if (classModel.states != null && classModel.states.Count > 0)
-            {
-                sourceCodeBuilder.AppendLine($"    enum {classModel.class_name}State;");
-            }
-        }
-        private void GenerateEventsEnums(JsonData.Model classModel)
-        {
-            if (classModel.attributes != null)
-            {
-                foreach (var @event in classModel.attributes)
-                {
-                    if (@event != null && @event.event_name != null)
-                    {
-                        string eventType = MapDataType(@event.data_type);
-
-                        // Check if it's an event attribute and generate the event struct
-                        if (@event.attribute_type == "inst_event")
-                        {
-                            // Skip inst_event declaration
-                        }
-                        else
-                        {
-                            sourceCodeBuilder.AppendLine($"enum {classModel.class_name}_{@event.event_name.ToUpper()} {{");
-                            sourceCodeBuilder.AppendLine($"    {eventType} {@event.event_name};");
-                            sourceCodeBuilder.AppendLine("};");
-                            sourceCodeBuilder.AppendLine();
-                        }
-                    }
-                }
-            }
-        }
-
-        private void GenerateEnums(JsonData json)
-        {
-            Dictionary<string, List<string>> statesByClass = new Dictionary<string, List<string>>();
-
-            // Group states by class
-            foreach (var model in json.model)
-            {
-                if (model.type == "class" && model.states != null && model.states.Count > 0)
-                {
-                    List<string> stateNames = model.states.Select(state => state.state_name.ToUpper().Replace(' ', '_')).ToList();
-                    statesByClass[model.class_name] = stateNames;
-
-                    // Check if attributes is not null before iterating
-                    if (model.attributes != null)
-                    {
-                        List<string> eventNames = model.attributes
-                            .Where(attribute => attribute.event_name != null)
-                            .Select(attribute => attribute.event_name.ToUpper().Replace(' ', '_'))
-                            .ToList();
-
-                        statesByClass[model.class_name].AddRange(eventNames);
-                    }
-                }
-            }
-
-            // Generate enums for states
-            GenerateEnumsForStates(statesByClass);
-
-            // Generate enums for event attributes
-            foreach (var model in json.model)
-            {
-                GenerateEventsEnums(model);
-            }
-            // Generate enums for state events
-            foreach (var model in json.model)
-            {
-                GenerateEnumsForStateEvents(model);
-            }
-        }
-        private void GenerateEnumsForStates(Dictionary<string, List<string>> statesByClass)
-        {
-            foreach (var className in statesByClass.Keys)
-            {
-                sourceCodeBuilder.AppendLine($"enum {className}State {{");
-
-                // Enum members for states
-                foreach (var stateName in statesByClass[className])
-                {
-                    sourceCodeBuilder.AppendLine($"    {stateName},");
-                }
-
-                sourceCodeBuilder.AppendLine("};");
-                sourceCodeBuilder.AppendLine();
-            }
-        }
-
-        private void GenerateEnumsForStateEvents(JsonData.Model model)
-        {
-            if (model.type == "class" && model.states != null && model.states.Count > 0)
-            {
-                foreach (var state in model.states)
-                {
-                    // Enum for state events
-                    if (state.state_event != null && state.state_event.Length > 0)
-                    {
-                        string enumName = $"{model.class_name}StateEvent_{state.state_name}";
-                        sourceCodeBuilder.AppendLine($"enum {enumName} {{");
-
-                        foreach (var eventName in state.state_event)
-                        {
-                            if (eventName != null)
-                            {
-                                sourceCodeBuilder.AppendLine($"    {eventName.ToUpper().Replace(' ', '_')},");
-                            }
-                        }
-
-                        sourceCodeBuilder.AppendLine("};");
-                        sourceCodeBuilder.AppendLine();
-                    }
-                }
-            }
-        }
-        private void GenerateStateFunctions(JsonData.Model classModel)
-        {
-            if (classModel.states != null)
+            if (classModel.type == "state" && classModel.states != null && classModel.states.Count > 0)
             {
                 foreach (var state in classModel.states)
                 {
-                    if (state.state_function != null)
-                    {
-                        foreach (var function in state.state_function)
-                        {
-                            // Generate state function implementation
-                            sourceCodeBuilder.AppendLine($"void {classModel.class_name}StateFunctions::{function}() {{");
-
-                            // Implement the logic based on the state details
-                            if (state.state_type.ToLower() == "string")
-                            {
-                                sourceCodeBuilder.AppendLine($"    strcpy({classModel.class_name}.{state.state_name}, \"{state.state_value}\");");
-                            }
-                            else
-                            {
-                                // Handle other types if needed
-                                sourceCodeBuilder.AppendLine($"    // TODO: Implement logic for {function} with type {state.state_type}");
-                            }
-
-                            sourceCodeBuilder.AppendLine("}");
-                        }
-                    }
-                }
-            }
-        }
-        private void GenerateAssociationStruct(JsonData.Model associationModel)
-        {
-            if (associationModel.@class.Count == 2)
-            {
-                var class1 = associationModel.@class[0];
-                var class2 = associationModel.@class[1];
-
-                string class1Multiplicity = class1.class_multiplicity;
-                string class2Multiplicity = class2.class_multiplicity;
-
-            }
-
-            if (associationModel.model != null)
-            {
-                GenerateAssociationClassStruct(associationModel.model, associationModel.name);
-            }
-        }
-        private void GenerateAssociationClassStruct(JsonData.Model associationClassModel, string associationName)
-        {
-            string classType = MapDataType(associationClassModel.class_name.ToLower());
-            sourceCodeBuilder.AppendLine($"struct {associationClassModel.class_name} {{");
-
-            foreach (var attribute in associationClassModel.attributes)
-            {
-                string attributeType = MapDataType(attribute.data_type.ToLower());
-                sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name};");
-            }
-
-          
-            sourceCodeBuilder.AppendLine("};");
-            sourceCodeBuilder.AppendLine();
-        }
-        private void GenerateImportedClassStruct(JsonData.Model importedClassModel)
-        {
-            string className = importedClassModel.class_name;
-
-            sourceCodeBuilder.AppendLine($"struct {className} {{");
-
-            foreach (var attribute in importedClassModel.attributes)
-            {
-                string attributeType = MapDataType(attribute.data_type.ToLower());
-                string arraySuffix = attributeType.EndsWith("[]") ? "" : "[]";
-
-                sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name}{arraySuffix};");
-            }
-
-            sourceCodeBuilder.AppendLine("};");
-            sourceCodeBuilder.AppendLine();
-        }
-        private void GenerateStateEnumsAndStructs(JsonData json)
-        {
-            foreach (var model in json.model)
-            {
-                if (model.type == "state" && model.states != null && model.states.Count > 0)
-                {
-                    GenerateStateEnums(model);
-                    GenerateStateStructs(model);
-                }
-            }
-        }
-
-        private void GenerateStateEnums(JsonData.Model classModel)
-        {
-            string className = classModel.class_name;
-            string enumPrefix = $"{className.ToUpper()}_";
-
-            sourceCodeBuilder.AppendLine($"enum {enumPrefix}State {{");
-
-            foreach (var state in classModel.states)
-            {
-                sourceCodeBuilder.AppendLine($"    {enumPrefix}{state.state_name.ToUpper().Replace(' ', '_')},");
-            }
-
-            sourceCodeBuilder.AppendLine("};");
-            sourceCodeBuilder.AppendLine();
-        }
-
-        private void GenerateStateStructs(JsonData.Model stateModel)
-        {
-            foreach (var state in stateModel.states)
-            {
-                string stateName = state.state_name;
-                string className = stateModel.class_name;
-
-                sourceCodeBuilder.AppendLine($"struct {className}_{stateName} {{");
-
-                foreach (var attribute in stateModel.attributes)
-                {
-                    string attributeType = MapDataType(attribute.data_type.ToLower());
-                    sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name};");
-                }
-
-                // Handle events
-                if (state.state_event != null && state.state_event.Length > 0)
-                {
-                    foreach (var eventName in state.state_event)
-                    {
-                        sourceCodeBuilder.AppendLine($"    {MapDataType(eventName)} {eventName};");
-                    }
-                }
-
-                // Handle transitions
-                foreach (var transition in state.transitions)
-                {
-                    string targetStateId = transition.target_state_id;
-                    string targetState = transition.target_state.Replace(' ', '_').ToUpper();
-
-                    sourceCodeBuilder.AppendLine($"    {targetStateId} {targetState};");
-                }
-
-                // Handle action
-                sourceCodeBuilder.AppendLine($"    // Action logic for {stateName}");
-                sourceCodeBuilder.AppendLine($"    {state.action}");
-
-                sourceCodeBuilder.AppendLine("};");
-                sourceCodeBuilder.AppendLine();
-            }
-        }
-        private void GenerateStateTransitions(JsonData json)
-        {
-            foreach (var model in json.model)
-            {
-                if (model.type == "state" && model.states != null && model.states.Count > 0)
-                {
-                    foreach (var state in model.states)
-                    {
-                        GenerateTransitionEnum(model.class_name, state);
-                    }
+                    GenerateTransitionEnum(classModel.class_name, state);
                 }
             }
         }
@@ -776,6 +494,416 @@ namespace TRANSLATING2
             }
         }
 
+        private void GenerateEventName(JsonData.Model classModel)
+        {
+            foreach (var attribute in classModel.attributes)
+            {
+                // Check if the 'event_name' property is not null or empty
+                if (!string.IsNullOrEmpty(attribute.event_name))
+                {
+                    // Use 'event_name' for generating the structure and display
+                    string eventName = attribute.event_name;
+
+                    // Generate code for the special structure
+                    sourceCodeBuilder.AppendLine($"    struct {eventName} {eventName};");
+                }
+            }
+        }
+
+        private void GenerateSetter(JsonData.Model classModel)
+        {
+            string className = classModel.class_name;
+            foreach (var attribute in classModel.attributes)
+            {
+                string dataType = MapDataType(attribute.data_type);
+                string attributeName = attribute.attribute_name;
+
+                if (attribute.data_type == "state")
+                {
+                    // Handle state attribute separately
+                    sourceCodeBuilder.AppendLine($"void set_{attributeName}(struct {className} *instance, {dataType} new_{attributeName}) {{");
+                    sourceCodeBuilder.AppendLine($"    instance->{attributeName} = new_{attributeName};");
+                    sourceCodeBuilder.AppendLine("}");
+                    sourceCodeBuilder.AppendLine();
+                }
+                else if (attribute.data_type == "inst_ref")
+                {
+                    // Handle inst_ref attribute separately
+                    sourceCodeBuilder.AppendLine($"void set_{attributeName}_ref(struct {className} *instance, struct {dataType} new_{attributeName}_ref) {{");
+                    sourceCodeBuilder.AppendLine($"    instance->{attributeName}_ref = new_{attributeName}_ref;");
+                    sourceCodeBuilder.AppendLine("}");
+                    sourceCodeBuilder.AppendLine();
+                }
+                else if (attribute.data_type == "inst_ref_set")
+                {
+                    // Handle inst_ref_set attribute separately
+                    sourceCodeBuilder.AppendLine($"void set_{attributeName}_ref_set(struct {className} *instance, struct {dataType} new_{attributeName}_ref_set) {{");
+                    sourceCodeBuilder.AppendLine($"    // Implementation for adding to the ref_set");
+                    sourceCodeBuilder.AppendLine("}");
+                    sourceCodeBuilder.AppendLine();
+                }
+                else if (attribute.data_type == "inst_event")
+                {
+                    // Skip generating setter for inst_event
+                    continue;
+                }
+                else
+                {
+                    sourceCodeBuilder.AppendLine($"void set_{attributeName}(struct {className} *instance, {dataType} new_{attributeName}) {{");
+                    sourceCodeBuilder.AppendLine($"    instance->{attributeName} = new_{attributeName};");
+                    sourceCodeBuilder.AppendLine("}");
+                    sourceCodeBuilder.AppendLine();
+                }
+            }
+        }
+        private void GeneratePrintAttributeNames(JsonData.Model classModel)
+        {
+            string className = classModel.class_name;
+            sourceCodeBuilder.AppendLine($"void Print{className}AttributeNames(const struct {className} *{className.ToLower()})");
+            sourceCodeBuilder.AppendLine("{");
+            sourceCodeBuilder.AppendLine($"    printf(\"Attribute names for {className} class:\\n\");");
+
+            foreach (var attribute in classModel.attributes)
+            {
+                sourceCodeBuilder.AppendLine($"    printf(\"- {attribute.attribute_name}\\n\");");
+            }
+
+            sourceCodeBuilder.AppendLine("}");
+        }
+            private void GenerateConstructor(JsonData.Model classModel)
+        {
+            string className = classModel.class_name;
+
+            // Constructor signature
+            sourceCodeBuilder.AppendLine($"void cons{className}(struct {className} *instance,");
+            sourceCodeBuilder.AppendLine($" {GetParameterList(classModel)})");
+            sourceCodeBuilder.AppendLine("{");
+
+            // Constructor body
+            foreach (var attribute in classModel.attributes)
+            {
+                if (attribute.attribute_type != "inst_event")
+                {
+                    sourceCodeBuilder.AppendLine($"    strcpy(instance->{attribute.attribute_name}, {GetAttributeFromJsonData(classModel, attribute)});");
+                }
+            }
+
+            // Close constructor
+            sourceCodeBuilder.AppendLine("}");
+            sourceCodeBuilder.AppendLine();
+        }
+        private string GetParameterList(JsonData.Model classModel)
+        {
+            var parameters = classModel.attributes
+                .Select(attribute => $"{MapDataType(attribute.data_type.ToLower())} {attribute.attribute_name}")
+                .ToList();
+            parameters.Add("char *status"); // Adding 'status' as an additional parameter
+            return string.Join(", ", parameters);
+        }
+        private string GetAttributeFromJsonData(JsonData.Model classModel, JsonData.Attribute1 attribute)
+        {
+            // Assuming the attribute value is always available in the JSON data
+            if (attribute.data_type.ToLower() == "string")
+            {
+                return $"\"{attribute.default_value}\"";
+            }
+            else
+            {
+                return attribute.default_value;
+            }
+        }
+        private void GenerateAttributeSetters(JsonData.Model classModel)
+        {
+            if (classModel != null && classModel.attributes != null && classModel.states != null && classModel.states.Count > 0)
+            {
+                foreach (var attribute in classModel.attributes)
+                {
+                    if (attribute.attribute_type != "inst_event")
+                    {
+                        GenerateAttributeSetter(classModel.class_name, attribute);
+                    }
+                }
+            }
+        }
+
+        private void GenerateAttributeSetter(string className, JsonData.Attribute1 attribute)
+        {
+            string attributeType = MapDataType(attribute.data_type.ToLower());
+
+            sourceCodeBuilder.AppendLine($"void set_{attribute.attribute_name}(struct {className} *instance, {attributeType} new_{attribute.attribute_name})");
+            sourceCodeBuilder.AppendLine("{");
+            sourceCodeBuilder.AppendLine($"    instance->{attribute.attribute_name} = new_{attribute.attribute_name};");
+            sourceCodeBuilder.AppendLine("}");
+            sourceCodeBuilder.AppendLine();
+        }
+
+        private string GetSetterLogic(string attributeType, string attributeName)
+        {
+            if (attributeType == "char")
+            {
+                return $"    strcpy(instance->{attributeName}, new_{attributeName});";
+            }
+            else
+            {
+                return $"    instance->{attributeName} = new_{attributeName};";
+            }
+        }
+        private void GenerateAttributes(JsonData.Model classModel)
+        {
+            foreach (var attribute in classModel.attributes)
+            {
+                
+
+                // Adjust data types as needed
+                string dataType = MapDataType(attribute.data_type.ToLower());
+
+                if (attribute.data_type != "state" && attribute.data_type != "inst_event" &&
+                    attribute.data_type != "inst_ref" && attribute.data_type != "inst_ref_set" &&
+                    attribute.data_type != "inst_ref_<timer>")
+                {
+                    sourceCodeBuilder.AppendLine($"    {dataType} {attribute.attribute_name};");
+                }
+                else if (attribute.data_type == "state" || attribute.data_type == "inst_ref_<timer>")
+                {
+                    sourceCodeBuilder.AppendLine($"    {dataType} {attribute.attribute_name};");
+                }
+                else if (attribute.data_type == "inst_ref")
+                {
+                    sourceCodeBuilder.AppendLine($"    struct {attribute.related_class_name}Ref* {attribute.attribute_name}Ref;");
+                }
+                else if (attribute.data_type == "inst_ref_set")
+                {
+                    sourceCodeBuilder.AppendLine($"    struct {attribute.related_class_name}RefSet* {attribute.attribute_name}RefSet;");
+                }
+            }
+        }
+
+        private void GenerateStatesEnum(JsonData.Model classModel)
+        {
+            if (classModel.states != null && classModel.states.Count > 0)
+            {
+                sourceCodeBuilder.AppendLine($"    enum {classModel.class_name}State {{");
+
+                // Generate enum values without state names
+                foreach (var state in classModel.states)
+                {
+                    sourceCodeBuilder.AppendLine($"        {state.state_value},");
+                }
+
+                sourceCodeBuilder.AppendLine($"    }};");
+            }
+        }
+        private void GenerateEventsEnums(JsonData.Model classModel)
+        {
+            if (classModel.attributes != null)
+            {
+                foreach (var @event in classModel.attributes)
+                {
+                    if (@event != null && @event.event_name != null)
+                    {
+                        // Check if it's an event attribute with type inst_event
+                        if (@event.attribute_type == "inst_event")
+                        {
+                            // Skip inst_event declaration
+                            continue;
+                        }
+
+                        string eventType = MapDataType(@event.data_type);
+
+                        sourceCodeBuilder.AppendLine($"    enum {classModel.class_name}_{@event.event_name.ToUpper()} {{");
+                        sourceCodeBuilder.AppendLine($"        {eventType} {@event.event_name};");
+                        sourceCodeBuilder.AppendLine("    };");
+                        sourceCodeBuilder.AppendLine();
+                    }
+                }
+            }
+        }
+
+        private void GenerateStateFunctions(JsonData.Model classModel)
+        {
+            if (classModel.states != null)
+            {
+                foreach (var state in classModel.states)
+                {
+                    GenerateSetActiveFunctionLogic(classModel.class_name, state);
+                }
+            }
+        }
+        private void GenerateSetActiveFunctionLogic(string className, JsonData.State state)
+        {
+            // Generate set_active function logic
+            string functionName = $"set_{state.state_name.ToLower()}";
+            string statusValue = state.state_value.ToLower(); // Assuming state_value is already in lowercase
+
+            sourceCodeBuilder.AppendLine($"void {functionName}(struct {className} *{className.ToLower()})");
+            sourceCodeBuilder.AppendLine("{");
+            sourceCodeBuilder.AppendLine($"    strcpy({className.ToLower()}->{state.state_name}, \"{statusValue}\");");
+            sourceCodeBuilder.AppendLine("}");
+            sourceCodeBuilder.AppendLine();
+        }
+        private void GenerateAssociation(JsonData.Model associationModel)
+        {
+            if (associationModel.model != null)
+            {
+                GenerateAssociationClassStruct(associationModel.model, associationModel.name);
+                GenerateAssociationSetter(associationModel.model, associationModel.name);
+            }
+        }
+
+        private void GenerateAssociationSetter(JsonData.Model associatedClass, string associationName)
+        {
+            foreach (var attribute in associatedClass.attributes)
+            {
+                // Adjust data types as needed
+                string dataType = MapDataType(attribute.data_type);
+                sourceCodeBuilder.AppendLine($"void set_{attribute.attribute_name}(struct {attribute.attribute_name}* instance, {dataType} new_{attribute.attribute_name}) {{");
+                sourceCodeBuilder.AppendLine($"    instance->{attribute.attribute_name} = new_{attribute.attribute_name};");
+                sourceCodeBuilder.AppendLine("}");
+                sourceCodeBuilder.AppendLine();
+            }
+        }
+
+        private void GenerateAssociationClassStruct(JsonData.Model associationClassModel, string associationName)
+        {
+            string classType = MapDataType(associationClassModel.class_name.ToLower());
+            sourceCodeBuilder.AppendLine($"struct {associationClassModel.class_name} {{");
+
+            GenerateAssociationAttributes(associationClassModel);
+
+            sourceCodeBuilder.AppendLine("};");
+            sourceCodeBuilder.AppendLine();
+
+            GenerateAssociationClassMethods(associationClassModel);
+
+        }
+       
+        private void GenerateAssociationAttributes(JsonData.Model associationClassModel)
+        {
+            foreach (var attribute in associationClassModel.attributes)
+            {
+                string attributeType = MapDataType(attribute.data_type.ToLower());
+                sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name};");
+            }
+        }
+
+        private void GenerateAssociationClassMethods(JsonData.Model associationClassModel)
+        {
+            GenerateAssociationStatesEnum(associationClassModel);
+            GenerateAssociationEventsEnums(associationClassModel);
+            GenerateAssociationStateFunctions(associationClassModel);
+            GenerateAssociationAttributeSetters(associationClassModel);
+        }
+
+        private void GenerateAssociationStatesEnum(JsonData.Model associationClassModel)
+        {
+            if (associationClassModel.states != null && associationClassModel.states.Count > 0)
+            {
+                sourceCodeBuilder.AppendLine($"    enum {associationClassModel.class_name}Status {{");
+
+                foreach (var state in associationClassModel.states)
+                {
+                    sourceCodeBuilder.AppendLine($"        {state.state_value},");
+                }
+
+                sourceCodeBuilder.AppendLine($"    }};");
+                sourceCodeBuilder.AppendLine();
+            }
+        }
+
+        private void GenerateAssociationEventsEnums(JsonData.Model associationClassModel)
+        {
+            if (associationClassModel.attributes != null)
+            {
+                foreach (var @event in associationClassModel.attributes)
+                {
+                    if (@event != null && @event.event_name != null)
+                    {
+                        if (@event.attribute_type == "inst_event")
+                        {
+                            continue;
+                        }
+
+                        string eventType = MapDataType(@event.data_type);
+
+                        sourceCodeBuilder.AppendLine($"    enum {associationClassModel.class_name}_{@event.event_name.ToUpper()} {{");
+                        sourceCodeBuilder.AppendLine($"        {eventType} {@event.event_name};");
+                        sourceCodeBuilder.AppendLine("    };");
+                        sourceCodeBuilder.AppendLine();
+                    }
+                }
+            }
+        }
+
+        private void GenerateAssociationStateFunctions(JsonData.Model associationClassModel)
+        {
+            if (associationClassModel.states != null)
+            {
+                foreach (var state in associationClassModel.states)
+                {
+                    GenerateAssociationSetActiveFunctionLogic(associationClassModel.class_name, state);
+                }
+            }
+        }
+
+        private void GenerateAssociationSetActiveFunctionLogic(string className, JsonData.State state)
+        {
+            string functionName = $"set_{state.state_name.ToLower()}";
+            string statusValue = state.state_value.ToLower();
+
+            sourceCodeBuilder.AppendLine($"void {functionName}(struct {className} *{className.ToLower()})");
+            sourceCodeBuilder.AppendLine("{");
+            sourceCodeBuilder.AppendLine($"    strcpy({className.ToLower()}->{state.state_name}, \"{statusValue}\");");
+            sourceCodeBuilder.AppendLine("}");
+            sourceCodeBuilder.AppendLine();
+        }
+
+        private void GenerateAssociationAttributeSetters(JsonData.Model associationClassModel)
+        {
+            if (associationClassModel != null && associationClassModel.attributes != null && associationClassModel.states != null && associationClassModel.states.Count > 0)
+            {
+                foreach (var attribute in associationClassModel.attributes)
+                {
+                    if (attribute.attribute_type != "inst_event")
+                    {
+                        GenerateAssociationAttributeSetter(associationClassModel.class_name, attribute);
+                    }
+                }
+            }
+        }
+
+        private void GenerateAssociationAttributeSetter(string className, JsonData.Attribute1 attribute)
+        {
+            string attributeType = MapDataType(attribute.data_type.ToLower());
+
+            sourceCodeBuilder.AppendLine($"void set_{attribute.attribute_name}(struct {className} *instance, {attributeType} new_{attribute.attribute_name})");
+            sourceCodeBuilder.AppendLine("{");
+            sourceCodeBuilder.AppendLine($"    {GetSetterLogic(attributeType, attribute.attribute_name)}");
+            sourceCodeBuilder.AppendLine("}");
+            sourceCodeBuilder.AppendLine();
+        }
+        private void GenerateImportedClassStruct(JsonData.Model importedClassModel)
+        {
+            string className = importedClassModel.class_name;
+
+            sourceCodeBuilder.AppendLine($"struct {className} {{");
+
+            foreach (var attribute in importedClassModel.attributes)
+            {
+                string attributeType = MapDataType(attribute.data_type.ToLower());
+                string arraySuffix = attributeType.EndsWith("[]") ? "" : "[]";
+
+                sourceCodeBuilder.AppendLine($"    {attributeType} {attribute.attribute_name}{arraySuffix};");
+            }
+            GenerateStatesEnum(importedClassModel);
+            sourceCodeBuilder.AppendLine("};");
+            sourceCodeBuilder.AppendLine();
+
+            // Generate additional sections for the imported class
+            GenerateEventsEnums(importedClassModel);
+            GenerateStateFunctions(importedClassModel);
+            //GenerateAttributeSetters(importedClassModel);
+            GenerateSetter(importedClassModel);
+        }
         private void CloseNamespace()
         {
             sourceCodeBuilder.AppendLine("}");
@@ -795,6 +923,8 @@ namespace TRANSLATING2
                     return "int";
                 case "real":
                     return "float";
+                case "inst_ref_<timer>":
+                    return "TIMER";
                 default:
                     return dataType; // For unknown types, just pass through
             }
@@ -844,6 +974,7 @@ namespace TRANSLATING2
                 public string class_id { get; set; }
                 public string state_id { get; set; }
                 public string state_name { get; set; }
+                public string related_class_name { get; set; }
             }
 
             public class Class1
@@ -867,32 +998,6 @@ namespace TRANSLATING2
                 public string target_state { get; set; }
             }
         }
-
-        private void btnCJSON_Click(object sender, EventArgs e)
-        {
-            if (!string.IsNullOrEmpty(selectedJsonFilePath) && File.Exists(selectedJsonFilePath))
-            {
-                try
-                {
-                    // Read the JSON file content
-                    string jsonContent = File.ReadAllText(selectedJsonFilePath);
-
-                    // Copy the JSON content to the clipboard
-                    Clipboard.SetText(jsonContent);
-
-                    MessageBox.Show("JSON content copied to clipboard.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error copying JSON content: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Please select a valid JSON file first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
         private void btnCCODE_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(textBox3.Text))
